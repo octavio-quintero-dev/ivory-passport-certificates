@@ -5,7 +5,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { loadConfig } from "./config.js";
 import { fetchMasterList } from "./fetch.js";
 import { parseMasterListFile } from "./parse.js";
-import { SOURCES, type Source } from "./sources.js";
+import { resolveSourceUrl, SOURCES, type Source } from "./sources.js";
 import { uploadCertificates } from "./upload.js";
 import { formatSummary, quietCrawleeLogs, runSources, type SourceStats } from "./worker.js";
 
@@ -21,7 +21,8 @@ async function main(): Promise<void> {
   });
 
   const processSource = async (source: Source): Promise<SourceStats> => {
-    const mlPath = await fetchMasterList(source.url);
+    const downloadUrl = await resolveSourceUrl(source);
+    const mlPath = await fetchMasterList(downloadUrl);
     const certs = await parseMasterListFile(mlPath);
     const { uploaded, skipped } = await uploadCertificates(
       client,
