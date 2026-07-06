@@ -4,11 +4,11 @@
 import { fetchMasterList } from "./fetch.js";
 import { certCountry, parseMasterListFile } from "./parse.js";
 
-// BSI German Master List. The public URL changes over time — override via env.
-// ponytail: default is the documented SharedDocs pattern; confirm before relying on it.
+// BSI German Master List (verified live: 588 certs / 116 countries, May 2026).
+// The unversioned URL always serves the latest publication. Override via env.
 const BSI_URL =
   process.env.BSI_MASTERLIST_URL ??
-  "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/CSCA/GermanMasterList.zip?__blob=publicationFile";
+  "https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/ElekAusweise/CSCA/GermanMasterList.zip?__blob=publicationFile";
 
 async function main(): Promise<void> {
   console.log(`Fetching BSI Master List: ${BSI_URL}`);

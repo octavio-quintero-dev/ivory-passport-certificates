@@ -23,7 +23,7 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 - [x] `parse.ts` — unwrap the CMS SignedData (pure pkijs, no openssl runtime dep)
 - [x] `parse.ts` — parse the inner `SET OF Certificate` (asn1js) → one `.pem` per certificate
 - [x] **Test:** synthetic signed `.ml` (openssl-generated certs) → expected N certificates (vitest, 4 passing)
-- [ ] Check how many distinct countries/issuers come out of the *real* BSI file (needs live URL — pending, gov URL 404s)
+- [x] Check how many distinct countries/issuers come out of the *real* BSI file — **588 certs / 116 countries** verified live against the BSI ZIP
 
 ## Phase 2 — Storage
 

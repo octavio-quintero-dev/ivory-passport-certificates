@@ -10,10 +10,20 @@ import { readFile } from "node:fs/promises";
 import * as asn1js from "asn1js";
 import { Certificate, ContentInfo, SignedData } from "pkijs";
 
+// asn1js caps nodes at 10k by default (anti-DoS). A real Master List holds
+// hundreds of certs and blows past it, so we raise the ceiling for our own
+// (trusted) input. ponytail: bump this if a list ever exceeds ~600 certs.
+const MAX_NODES = 1_000_000;
+
+function fromBER(der: ArrayBuffer): asn1js.FromBerResult {
+  const asn1 = asn1js.fromBER(der, { maxNodes: MAX_NODES });
+  if (asn1.offset === -1) throw new Error(`ASN.1: ${asn1.result?.error ?? "invalid DER"}`);
+  return asn1;
+}
+
 /** Extract the signed content (the CscaMasterList DER) from a CMS SignedData. */
 export function extractMasterListContent(cmsDer: ArrayBuffer): ArrayBuffer {
-  const asn1 = asn1js.fromBER(cmsDer);
-  if (asn1.offset === -1) throw new Error("CMS: invalid DER");
+  const asn1 = fromBER(cmsDer);
 
   const contentInfo = new ContentInfo({ schema: asn1.result });
   const signedData = new SignedData({ schema: contentInfo.content });
@@ -25,8 +35,7 @@ export function extractMasterListContent(cmsDer: ArrayBuffer): ArrayBuffer {
 
 /** Return the DER bytes of every Certificate in a CscaMasterList content blob. */
 export function parseCertificates(contentDer: ArrayBuffer): ArrayBuffer[] {
-  const asn1 = asn1js.fromBER(contentDer);
-  if (asn1.offset === -1) throw new Error("CscaMasterList: invalid DER");
+  const asn1 = fromBER(contentDer);
 
   // SEQUENCE { version, certList SET OF Certificate } — grab the SET.
   const seqValues = (asn1.result.valueBlock as unknown as { value: asn1js.BaseBlock[] }).value;
@@ -54,9 +63,7 @@ export function toPem(der: ArrayBuffer): string {
 
 /** Issuing country of a certificate (subject C=), or undefined if absent. */
 export function certCountry(der: ArrayBuffer): string | undefined {
-  const asn1 = asn1js.fromBER(der);
-  if (asn1.offset === -1) return undefined;
-  const cert = new Certificate({ schema: asn1.result });
+  const cert = new Certificate({ schema: fromBER(der).result });
   const c = cert.subject.typesAndValues.find((tv) => tv.type === "2.5.4.6"); // id-at-countryName
   return c?.value.valueBlock.value as string | undefined;
 }
