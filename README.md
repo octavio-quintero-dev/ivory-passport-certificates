@@ -7,10 +7,41 @@ It never targets ICAO servers. It uses public institutional sources, starting wi
 ## Stack
 
 - **TypeScript** (Node 20+)
-- **Crawlee** (`CheerioCrawler`) — orchestration, retry, queue
-- **openssl + pkijs** — CMS / ASN.1 parsing of the Master Lists
-- **`@aws-sdk/client-s3`** — storage client (S3-compatible)
-- **Hetzner** — infrastructure: a small Cloud VM runs the weekly CronJob, and **Hetzner Object Storage** (S3-compatible) holds the certificates. EU datacenters (GDPR-friendly).
+- **Crawlee** (`BasicCrawler`) — orchestration, retry/backoff, per-source failure isolation; **Cheerio** for discovering download links on ministry pages
+- **pkijs / asn1js** — CMS / ASN.1 parsing of the Master Lists (pure JS, no openssl at runtime)
+- **`@aws-sdk/client-s3`** — storage client (works against any S3-compatible endpoint)
+- **Hetzner** — infrastructure: a small Cloud VM runs the weekly job, and **Hetzner Object Storage** (S3-compatible) holds the certificates. EU datacenters (GDPR-friendly).
+
+## Quickstart
+
+Prerequisites: Node 20+, and S3-compatible object-storage credentials (from
+Hetzner — ask whoever owns the storage account).
+
+```bash
+npm ci                     # install dependencies
+npm test                   # 14 tests, no credentials needed
+
+cp .env.example .env       # then fill in the S3_* values (see below)
+npm run dev                # run the worker once: fetch → parse → upload
+```
+
+`.env` is gitignored — **never commit credentials.** Fill it with the values
+your storage account issues:
+
+```
+S3_ENDPOINT=https://fsn1.your-objectstorage.com   # points the client at Hetzner
+S3_REGION=fsn1
+S3_ACCESS_KEY_ID=<from Hetzner>
+S3_SECRET_ACCESS_KEY=<from Hetzner>
+S3_BUCKET=ivory-csca-certificates                 # create this bucket once, first
+S3_PREFIX=csca
+```
+
+No S3 account yet? You can still run everything except the upload — `npm test`
+and the fetch/parse pipeline work offline. For a full local run without Hetzner,
+point `S3_ENDPOINT` at a local [MinIO](https://min.io) container (S3-compatible).
+
+Docker and weekly scheduling: see [DEPLOY.md](./DEPLOY.md).
 
 ## Status
 
