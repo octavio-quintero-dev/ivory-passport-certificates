@@ -1,69 +1,75 @@
-# CSCA Master List Scraper — Checklist del proceso
+# CSCA Master List Scraper — Process Checklist
 
-Worker batch en TypeScript: descarga Master Lists públicas → extrae certificados CSCA → normaliza a `.pem` → sube a S3. Corre semanal vía CronJob.
+TypeScript batch worker: download public Master Lists → extract CSCA certificates → normalize to `.pem` → upload to Hetzner Object Storage (S3-compatible). Runs weekly via CronJob.
 
-**Regla base:** la estructura crece cuando aparece el segundo caso real, no antes. Empezamos con 1 fuente (BSI).
+**Base rule:** structure grows when the second real case appears, not before. We start with 1 source (BSI).
 
 ---
 
-## Fase 0 — Setup
+## Phase 0 — Setup
 
-- [x] Repo enlazado a GitHub (`main` = rama principal, `dev` = integración)
-- [x] `package.json` + TypeScript + `tsx` (dev) configurados
-- [x] Deps núcleo: `crawlee`, `pkijs`, `@peculiar/asn1-x509`, `@aws-sdk/client-s3`, `unzipper`, `zod`
-- [x] `vitest` para el test del parser
+- [x] Repo linked to GitHub (`main` = release, `dev` = integration/default)
+- [x] `package.json` + TypeScript + `tsx` (dev) configured
+- [x] Core deps: `crawlee`, `pkijs`, `@peculiar/asn1-x509`, `@aws-sdk/client-s3`, `unzipper`, `zod`
+- [x] `vitest` for the parser test
 - [x] `.gitignore` (node_modules, dist, tmp, .env)
-- [x] `.env.example` (S3 bucket, region, credenciales)
+- [x] `.env.example` (S3 bucket, region, endpoint, credentials)
 
-## Fase 1 — Spike BSI (el núcleo, sin Crawlee todavía)
+## Phase 1 — BSI spike (the core, no Crawlee yet)
 
-> Objetivo: probar que openssl + pkijs alcanza ANTES de decidir framework. ~50 líneas cubren el ~80% de países.
+> Goal: prove openssl + pkijs is enough BEFORE committing to the framework. ~50 lines cover ~80% of countries.
 
-- [ ] `fetch.ts` — GET del `.ml` del BSI a carpeta temporal (`os.tmpdir()`)
-- [ ] `parse.ts` — desenvolver CMS SignedData (openssl `cms -verify -noverify -inform DER`)
-- [ ] `parse.ts` — parsear el `SET OF Certificate` interno (pkijs) → un `.pem` por certificado
-- [ ] **Test:** `.ml` de fixture → N certificados esperados (vitest)
-- [ ] Verificar cuántos países/emisores distintos salen del archivo BSI
+- [x] `fetch.ts` — download the BSI file into a temp folder (`os.tmpdir()`), unzip if needed
+- [x] `parse.ts` — unwrap the CMS SignedData (pure pkijs, no openssl runtime dep)
+- [x] `parse.ts` — parse the inner `SET OF Certificate` (asn1js) → one `.pem` per certificate
+- [x] **Test:** synthetic signed `.ml` (openssl-generated certs) → expected N certificates (vitest, 4 passing)
+- [x] Check how many distinct countries/issuers come out of the *real* BSI file — **588 certs / 116 countries** verified live against the BSI ZIP
 
-## Fase 2 — Storage
+## Phase 2 — Storage
 
-- [ ] `upload.ts` — subir los `.pem` a S3 de forma estructurada (ej. `csca/<pais>/<fingerprint>.pem`)
-- [ ] Definir convención de nombres y layout del bucket
-- [ ] Idempotencia: no re-subir lo que no cambió (dedupe por fingerprint)
+- [x] `upload.ts` — upload the `.pem` files to Hetzner Object Storage in a structured layout (`<prefix>/<country>/<sha256>.pem`)
+- [x] Define naming convention and bucket layout (SHA-256 of cert DER = fingerprint)
+- [x] Idempotency: don't re-upload unchanged files (HeadObject dedupe by fingerprint)
+- [x] `config.ts` — zod-validated env (S3 creds/bucket/endpoint), fail-fast at startup
+- [ ] Live upload against a real Hetzner bucket — **not yet verified** (needs credentials); logic covered by fake-S3 test
 
-## Fase 3 — Orquestación + resiliencia
+## Phase 3 — Orchestration + resilience
 
-- [ ] `main.ts` — encadena fetch → parse → upload
-- [ ] Envolver en Crawlee (`CheerioCrawler`) para retry/backoff/queue
-- [ ] Que una fuente caída NO tumbe el proceso entero (aislar errores por fuente)
-- [ ] Logging de resumen: fuentes OK / fallidas, certificados nuevos / actualizados
+- [x] `main.ts` — chain fetch → parse → upload (per source)
+- [x] Wrap in Crawlee (`BasicCrawler`) for retry/backoff/queue — `CheerioCrawler` deferred to Phase 4 (needed only for sources that require HTML link discovery)
+- [x] A single failing source must NOT bring down the whole run — Crawlee retries then routes to `failedRequestHandler`; verified live (BSI ok + dead source isolated)
+- [x] Summary logging: sources OK / failed, certificate counts (new / present)
+- [x] In-memory Crawlee storage (`persistStorage: false`) — no `./storage` artifacts, clean state per run
 
-## Fase 4 — Expansión de fuentes (recién cuando Fase 1-3 andan)
+## Phase 4 — Source expansion (only once Phase 1-3 work)
 
-- [ ] Nace `src/sources/` con un archivo por ministerio (`bsi.ts` primero)
-- [ ] Identificar qué países NO cubre el BSI
-- [ ] Sumar 2-4 master lists nacionales que agreguen (tapan casi todo el resto)
-- [ ] Un puñado suelto para los que falten hasta llegar a ~100
+- [ ] `src/sources/` is born, one file per ministry (`bsi.ts` first)
+- [ ] Identify which countries BSI does NOT cover
+- [ ] Add 2-4 national master lists that also aggregate (cover almost all the rest)
+- [ ] A handful of individual sources for whatever is left, up to ~100
 
-## Fase 5 — Automatización / deploy
+## Phase 5 — Automation / deploy
 
-- [ ] Build de prod (`tsc` o `tsup`)
-- [ ] Dockerfile (incluir `openssl` en la imagen)
-- [ ] k8s CronJob semanal (el scheduler es infra, NO node-cron adentro del proceso)
-- [ ] Alertas si el run falla o si una fuente clave queda offline N semanas
+- [ ] Prod build (`tsc`)
+- [ ] Dockerfile (include `openssl` in the image)
+- [ ] Deploy on **Hetzner**: Cloud VM + weekly CronJob (the scheduler is infra, NOT node-cron inside the process)
+- [ ] Point the S3 client at **Hetzner Object Storage** (custom `endpoint`, S3-compatible)
+- [ ] Alerts if the run fails or a key source stays offline for N weeks
 
 ---
 
-## Decisiones tomadas
+## Decisions made
 
-- **Lenguaje:** TypeScript (matchea stack de ivory)
-- **Scraping:** Crawlee / `CheerioCrawler` — Playwright solo si un sitio lo exige
-- **Sin NestJS:** es un worker batch, no una app que escucha
-- **Parsing:** openssl (desenvolver CMS) + pkijs (SET OF Certificate). Es la parte difícil real
-- **Scheduling:** k8s CronJob, no `node-cron`
+- **Language:** TypeScript (matches ivory stack)
+- **Scraping:** Crawlee / `CheerioCrawler` — Playwright only if a site forces it
+- **No NestJS:** it's a batch worker, not a listening app
+- **Parsing:** openssl (unwrap CMS) + pkijs (SET OF Certificate). This is the actual hard part
+- **Infrastructure:** Hetzner (Cloud VM for the CronJob, Object Storage for the certs)
+- **Scheduling:** k8s/Hetzner CronJob, not `node-cron`
+- **Language of the codebase:** all comments and project docs in English
 
-## Fuera de alcance (NO hacer)
+## Out of scope (do NOT do)
 
-- ❌ Apuntar a servidores ICAO (CAPTCHA + licencia)
-- ❌ NestJS, Playwright preventivo, axios, ORM, node-cron
-- ❌ Mapear 100 sitios el día 1
+- ❌ Target ICAO servers (CAPTCHA + license)
+- ❌ NestJS, preemptive Playwright, axios, ORM, node-cron
+- ❌ Map 100 sites on day 1
