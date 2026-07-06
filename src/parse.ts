@@ -65,7 +65,8 @@ export function toPem(der: ArrayBuffer): string {
 export function certCountry(der: ArrayBuffer): string | undefined {
   const cert = new Certificate({ schema: fromBER(der).result });
   const c = cert.subject.typesAndValues.find((tv) => tv.type === "2.5.4.6"); // id-at-countryName
-  return c?.value.valueBlock.value as string | undefined;
+  // Some issuers encode the code lowercase; normalize to canonical ISO uppercase.
+  return (c?.value.valueBlock.value as string | undefined)?.toUpperCase();
 }
 
 /** Concatenate the bytes of a (possibly constructed) OCTET STRING. */

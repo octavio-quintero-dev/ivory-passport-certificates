@@ -10,13 +10,14 @@ import { basename, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { Open } from "unzipper";
+import { httpGet } from "./http.js";
 
 const ML_EXTENSIONS = [".ml", ".cer", ".pem", ".der"];
 
 /** Download `url` into a fresh temp dir and return the local file path. */
 export async function downloadToTemp(url: string, filename: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok || !res.body) throw new Error(`GET ${url} failed: ${res.status} ${res.statusText}`);
+  const res = await httpGet(url);
+  if (!res.body) throw new Error(`GET ${url} returned no body`);
 
   const dir = await mkdtemp(join(tmpdir(), "csca-"));
   const dest = join(dir, filename);

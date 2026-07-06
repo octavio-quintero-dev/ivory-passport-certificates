@@ -43,10 +43,21 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 ## Phase 4 — Source expansion (only once Phase 1-3 work)
 
-- [ ] `src/sources/` is born, one file per ministry (`bsi.ts` first)
-- [ ] Identify which countries BSI does NOT cover
-- [ ] Add 2-4 national master lists that also aggregate (cover almost all the rest)
-- [ ] A handful of individual sources for whatever is left, up to ~100
+- [x] Source registry with **link discovery** (Cheerio) — a source points at a
+      ministry's HTML page + a `linkPattern`; the current file URL is scraped at
+      runtime. Direct-file sources just set `url`. **No file-per-ministry**: a
+      source is data (url + pattern), not code, until one needs custom logic.
+- [x] BSI converted to page-based resolution (survives version/URL churn that
+      previously caused a 404). Verified live: landing page → versioned .zip → 588 certs.
+- [x] Identify which countries BSI covers — **116 entries / ~112 real countries** incl.
+      every major issuer (US GB FR DE CN JP IN BR RU …) plus authorities (EU/UN/KS).
+- [x] Normalize country codes to uppercase ISO (some issuers encode lowercase).
+- [x] **Conclusion:** per the hub-first strategy, the BSI hub alone meets the
+      "~100 nations" target. No missing *major* nation found, so no extra ministry
+      is added speculatively. The registry is ready — add a `{ name, url, linkPattern }`
+      entry when a specific missing country is identified.
+- [ ] (Deferred/optional) Add a national master list for any specific gap the
+      product later flags — registry + orchestration already support N sources.
 
 ## Phase 5 — Automation / deploy
 
