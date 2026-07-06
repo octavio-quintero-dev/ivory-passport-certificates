@@ -1,0 +1,38 @@
+{
+  "name": "ivory-passport-certificates",
+  "version": "0.1.0",
+  "description": "Worker que recupera Master Lists CSCA públicas, extrae y normaliza certificados a PEM y los sube a S3",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1079.0",
+    "@peculiar/asn1-x509": "^2.8.0",
+    "cheerio": "^1.2.0",
+    "crawlee": "^3.17.0",
+    "pkijs": "^3.4.0",
+    "unzipper": "^0.12.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@types/unzipper": "^0.10.11",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
