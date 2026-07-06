@@ -11,8 +11,9 @@ docker build -t <registry>/ivory-csca:latest .
 docker push <registry>/ivory-csca:latest
 ```
 
-The image is `node:22-slim` + prod deps + compiled `dist`. No system packages —
-certificate parsing is pure JS (openssl is **not** a runtime dependency).
+The image is `node:22-slim` + prod deps + compiled `dist`. The only system
+package is `procps` (Crawlee's snapshotter shells out to `ps`); openssl is **not**
+needed — certificate parsing is pure JS.
 
 ## 2. Configure environment
 
