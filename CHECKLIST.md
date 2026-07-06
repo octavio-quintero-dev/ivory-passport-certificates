@@ -8,12 +8,12 @@ Worker batch en TypeScript: descarga Master Lists públicas → extrae certifica
 
 ## Fase 0 — Setup
 
-- [x] Repo enlazado a GitHub (`main` = rama principal)
-- [ ] `package.json` + TypeScript + `tsx` (dev) configurados
-- [ ] Deps núcleo: `crawlee`, `pkijs`, `@peculiar/asn1-x509`, `@aws-sdk/client-s3`, `unzipper`, `zod`
-- [ ] `vitest` para el test del parser
-- [ ] `.gitignore` (node_modules, dist, tmp, .env)
-- [ ] `.env.example` (S3 bucket, region, credenciales)
+- [x] Repo enlazado a GitHub (`main` = rama principal, `dev` = integración)
+- [x] `package.json` + TypeScript + `tsx` (dev) configurados
+- [x] Deps núcleo: `crawlee`, `pkijs`, `@peculiar/asn1-x509`, `@aws-sdk/client-s3`, `unzipper`, `zod`
+- [x] `vitest` para el test del parser
+- [x] `.gitignore` (node_modules, dist, tmp, .env)
+- [x] `.env.example` (S3 bucket, region, credenciales)
 
 ## Fase 1 — Spike BSI (el núcleo, sin Crawlee todavía)
 
