@@ -15,10 +15,10 @@ async function main(): Promise<void> {
   quietCrawleeLogs();
 
   const client = new S3Client({
-    region: cfg.AWS_REGION,
+    region: cfg.S3_REGION,
     endpoint: cfg.S3_ENDPOINT,
     forcePathStyle: Boolean(cfg.S3_ENDPOINT), // path-style for non-AWS S3 (Hetzner)
-    credentials: { accessKeyId: cfg.AWS_ACCESS_KEY_ID, secretAccessKey: cfg.AWS_SECRET_ACCESS_KEY },
+    credentials: { accessKeyId: cfg.S3_ACCESS_KEY_ID, secretAccessKey: cfg.S3_SECRET_ACCESS_KEY },
   });
 
   // Certificates seen across all sources, aggregated into the manifest at the end.
