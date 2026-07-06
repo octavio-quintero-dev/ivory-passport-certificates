@@ -61,11 +61,14 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 ## Phase 5 — Automation / deploy
 
-- [ ] Prod build (`tsc`)
-- [ ] Dockerfile (include `openssl` in the image)
-- [ ] Deploy on **Hetzner**: Cloud VM + weekly CronJob (the scheduler is infra, NOT node-cron inside the process)
-- [ ] Point the S3 client at **Hetzner Object Storage** (custom `endpoint`, S3-compatible)
-- [ ] Alerts if the run fails or a key source stays offline for N weeks
+- [x] Prod build (`tsc`) — `dist/` excludes tests; compiled entrypoint verified runnable
+- [x] Dockerfile — multi-stage `node:22-slim`, **no openssl needed** (parsing is pure JS)
+- [x] `.dockerignore`
+- [x] Deploy doc (`DEPLOY.md`): **Hetzner** Cloud VM + Docker + **systemd timer** weekly (scheduler is infra, NOT node-cron); k8s CronJob alternative documented
+- [x] S3 client points at **Hetzner Object Storage** via `S3_ENDPOINT` (path-style auto-enabled) — config + docs done
+- [x] Exit-code contract for alerting (0 = partial ok, 1 = all failed / fatal) + summary log line
+- [ ] Wire actual alerts to the team's monitoring stack (infra task, outside this repo)
+- [ ] Build/push the image in CI (needs registry creds; Dockerfile ready)
 
 ---
 

@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.gitignore
+tmp
+storage
+*.log
+.env
+.env.local
+_verify.ts
+README.md
+CHECKLIST.md

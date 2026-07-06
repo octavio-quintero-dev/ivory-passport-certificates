@@ -36,6 +36,23 @@ describe("runSources", () => {
     expect(byName["bad"].error).toContain("ministry offline");
   });
 
+  it("passes the real Source to process (RegExp fields survive)", async () => {
+    // Regression: Crawlee JSON-serializes userData, which would turn a RegExp
+    // linkPattern into {}. runSources must not route Sources through userData.
+    const withPattern: Source = { name: "bsi", url: "https://example.test/p", linkPattern: /\.zip/i };
+    let seen: Source | undefined;
+    await runSources(
+      [withPattern],
+      async (s) => {
+        seen = s;
+        return { certs: 1, uploaded: 1, skipped: 0 };
+      },
+      { maxRetries: 0 },
+    );
+    expect(seen?.linkPattern).toBeInstanceOf(RegExp);
+    expect(seen?.linkPattern?.test("a.ZIP")).toBe(true);
+  });
+
   it("retries a flaky source before giving up", async () => {
     let attempts = 0;
     const results = await runSources(
