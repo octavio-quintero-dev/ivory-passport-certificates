@@ -19,13 +19,16 @@ certificate parsing is pure JS (openssl is **not** a runtime dependency).
 Copy `.env.example` and fill it in. For **Hetzner Object Storage** (S3-compatible):
 
 ```
-AWS_REGION=fsn1
-AWS_ACCESS_KEY_ID=<hetzner key>
-AWS_SECRET_ACCESS_KEY=<hetzner secret>
+S3_REGION=fsn1
+S3_ACCESS_KEY_ID=<hetzner key>
+S3_SECRET_ACCESS_KEY=<hetzner secret>
 S3_ENDPOINT=https://fsn1.your-objectstorage.com
 S3_BUCKET=ivory-csca-certificates
 S3_PREFIX=csca
 ```
+
+These are the credentials **Hetzner** issues for Object Storage — not an Amazon
+AWS account. The S3 API is a de-facto standard Hetzner implements.
 
 `S3_ENDPOINT` makes the AWS SDK talk to Hetzner (path-style addressing is set
 automatically when an endpoint is present). Leave it empty to target AWS S3.

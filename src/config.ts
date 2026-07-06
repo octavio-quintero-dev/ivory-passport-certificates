@@ -4,9 +4,12 @@
 import { z } from "zod";
 
 const schema = z.object({
-  AWS_REGION: z.string().default("fsn1"),
-  AWS_ACCESS_KEY_ID: z.string().min(1, "required"),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1, "required"),
+  // S3-protocol credentials. With Hetzner Object Storage these are the access
+  // key/secret Hetzner issues — not an Amazon account. (The S3 API is a de-facto
+  // standard many providers implement.)
+  S3_REGION: z.string().default("fsn1"),
+  S3_ACCESS_KEY_ID: z.string().min(1, "required"),
+  S3_SECRET_ACCESS_KEY: z.string().min(1, "required"),
   // Empty for AWS S3; set to the Hetzner Object Storage endpoint otherwise.
   S3_ENDPOINT: z.string().min(1).optional(),
   S3_BUCKET: z.string().min(1, "required"),
