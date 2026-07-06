@@ -27,9 +27,11 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 ## Phase 2 — Storage
 
-- [ ] `upload.ts` — upload the `.pem` files to Hetzner Object Storage in a structured layout (e.g. `csca/<country>/<fingerprint>.pem`)
-- [ ] Define naming convention and bucket layout
-- [ ] Idempotency: don't re-upload unchanged files (dedupe by fingerprint)
+- [x] `upload.ts` — upload the `.pem` files to Hetzner Object Storage in a structured layout (`<prefix>/<country>/<sha256>.pem`)
+- [x] Define naming convention and bucket layout (SHA-256 of cert DER = fingerprint)
+- [x] Idempotency: don't re-upload unchanged files (HeadObject dedupe by fingerprint)
+- [x] `config.ts` — zod-validated env (S3 creds/bucket/endpoint), fail-fast at startup
+- [ ] Live upload against a real Hetzner bucket — **not yet verified** (needs credentials); logic covered by fake-S3 test
 
 ## Phase 3 — Orchestration + resilience
 
