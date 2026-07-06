@@ -1,22 +1,23 @@
 # ivory-passport-certificates
 
-Worker que recupera **Master Lists públicas** de certificados CSCA gubernamentales, extrae y normaliza los certificados a `.pem`, y los sube a S3. Estos certificados los consumen los clientes iOS para la **Passive Authentication** en la lectura NFC del pasaporte (ICAO 9303).
+Worker that fetches public **CSCA Master Lists** of government certificates, extracts and normalizes the certificates to `.pem`, and uploads them to S3-compatible object storage. These certificates are consumed by the iOS clients to perform **Passive Authentication** during passport NFC reading (ICAO 9303).
 
-No apunta nunca a servidores ICAO. Usa fuentes públicas institucionales, empezando por la Master List del **BSI alemán** (que agrega los CSCA de decenas de naciones).
+It never targets ICAO servers. It uses public institutional sources, starting with the **German BSI** Master List (which aggregates the CSCA certificates of dozens of nations).
 
 ## Stack
 
 - **TypeScript** (Node 20+)
-- **Crawlee** (`CheerioCrawler`) — orquestación, retry, queue
-- **openssl + pkijs** — parsing CMS / ASN.1 de las Master Lists
-- **`@aws-sdk/client-s3`** — storage
-- Deploy: **k8s CronJob** semanal
+- **Crawlee** (`CheerioCrawler`) — orchestration, retry, queue
+- **openssl + pkijs** — CMS / ASN.1 parsing of the Master Lists
+- **`@aws-sdk/client-s3`** — storage client (S3-compatible)
+- **Hetzner** — infrastructure: a small Cloud VM runs the weekly CronJob, and **Hetzner Object Storage** (S3-compatible) holds the certificates. EU datacenters (GDPR-friendly).
 
-## Estado
+## Status
 
-Ver [CHECKLIST.md](./CHECKLIST.md) para el proceso y el avance.
+See [CHECKLIST.md](./CHECKLIST.md) for the process and progress.
 
-## Ramas
+## Branches
 
-- `main` — rama principal
-- feature branches para cada fase / cambio
+- `main` — release / stable
+- `dev` — integration (default branch, PRs land here)
+- `feature/*` — work branches, PR against `dev`

@@ -1,8 +1,8 @@
-// Entry point del worker. Encadena fetch -> parse -> upload.
-// Se implementa en Fase 1+. Ver CHECKLIST.md.
+// Worker entry point. Chains fetch -> parse -> upload.
+// Implemented in Phase 1+. See CHECKLIST.md.
 
 async function main(): Promise<void> {
-  console.log("ivory-passport-certificates: worker no implementado todavía (Fase 0)");
+  console.log("ivory-passport-certificates: worker not implemented yet (Phase 0)");
 }
 
 main().catch((err) => {
