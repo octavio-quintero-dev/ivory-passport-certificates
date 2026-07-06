@@ -4,9 +4,9 @@
 // A few expose the .ml/.cer/.pem directly. This handles both.
 
 import { createWriteStream } from "node:fs";
-import { mkdtemp, readdir } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { Open } from "unzipper";
@@ -26,14 +26,19 @@ export async function downloadToTemp(url: string, filename: string): Promise<str
 
 /** Extract the first Master List entry from a ZIP; return its local path. */
 export async function extractMasterList(zipPath: string): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "csca-zip-"));
   const directory = await Open.file(zipPath);
-  await directory.extract({ path: dir });
+  const entry = directory.files.find((f) =>
+    ML_EXTENSIONS.some((ext) => f.path.toLowerCase().endsWith(ext)),
+  );
+  if (!entry) throw new Error(`No master list file (${ML_EXTENSIONS.join("/")}) inside ${zipPath}`);
 
-  const files = await readdir(dir);
-  const match = files.find((f) => ML_EXTENSIONS.some((ext) => f.toLowerCase().endsWith(ext)));
-  if (!match) throw new Error(`No master list file (${ML_EXTENSIONS.join("/")}) inside ${zipPath}`);
-  return join(dir, match);
+  // entry.buffer() fully inflates the single entry and resolves once — unlike
+  // directory.extract(), whose background streams can emit errors that escape
+  // as an unhandledRejection and crash the whole run.
+  const dir = await mkdtemp(join(tmpdir(), "csca-zip-"));
+  const dest = join(dir, basename(entry.path));
+  await writeFile(dest, await entry.buffer());
+  return dest;
 }
 
 /** Fetch a source URL and return a local .ml path, unzipping if needed. */

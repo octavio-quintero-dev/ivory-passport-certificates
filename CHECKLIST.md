@@ -35,10 +35,11 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 ## Phase 3 — Orchestration + resilience
 
-- [ ] `main.ts` — chain fetch → parse → upload
-- [ ] Wrap in Crawlee (`CheerioCrawler`) for retry/backoff/queue
-- [ ] A single failing source must NOT bring down the whole run (isolate errors per source)
-- [ ] Summary logging: sources OK / failed, certificates new / updated
+- [x] `main.ts` — chain fetch → parse → upload (per source)
+- [x] Wrap in Crawlee (`BasicCrawler`) for retry/backoff/queue — `CheerioCrawler` deferred to Phase 4 (needed only for sources that require HTML link discovery)
+- [x] A single failing source must NOT bring down the whole run — Crawlee retries then routes to `failedRequestHandler`; verified live (BSI ok + dead source isolated)
+- [x] Summary logging: sources OK / failed, certificate counts (new / present)
+- [x] In-memory Crawlee storage (`persistStorage: false`) — no `./storage` artifacts, clean state per run
 
 ## Phase 4 — Source expansion (only once Phase 1-3 work)
 
