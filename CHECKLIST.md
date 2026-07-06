@@ -19,11 +19,11 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 > Goal: prove openssl + pkijs is enough BEFORE committing to the framework. ~50 lines cover ~80% of countries.
 
-- [ ] `fetch.ts` — GET the BSI `.ml` into a temp folder (`os.tmpdir()`)
-- [ ] `parse.ts` — unwrap the CMS SignedData (openssl `cms -verify -noverify -inform DER`)
-- [ ] `parse.ts` — parse the inner `SET OF Certificate` (pkijs) → one `.pem` per certificate
-- [ ] **Test:** fixture `.ml` → expected N certificates (vitest)
-- [ ] Check how many distinct countries/issuers come out of the BSI file
+- [x] `fetch.ts` — download the BSI file into a temp folder (`os.tmpdir()`), unzip if needed
+- [x] `parse.ts` — unwrap the CMS SignedData (pure pkijs, no openssl runtime dep)
+- [x] `parse.ts` — parse the inner `SET OF Certificate` (asn1js) → one `.pem` per certificate
+- [x] **Test:** synthetic signed `.ml` (openssl-generated certs) → expected N certificates (vitest, 4 passing)
+- [ ] Check how many distinct countries/issuers come out of the *real* BSI file (needs live URL — pending, gov URL 404s)
 
 ## Phase 2 — Storage
 
