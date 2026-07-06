@@ -66,7 +66,19 @@ weekly cadence.
 If a cluster is available, a `CronJob` with `schedule: "17 3 * * 1"` and the same
 image/env works equally well.
 
-## 4. Exit codes & alerting
+## 4. Access control
+
+Two distinct credentials on the bucket:
+
+- **Worker (this service): write.** The only writer. Keep this locked down — the
+  bucket is a trust store, and a forged CSCA would let a fake passport validate.
+- **Passport-validation API: read-only.** A separate access key limited to
+  `GetObject`/`ListObject` under the prefix. The data is public, but read is
+  credentialed to control egress/abuse and keep consumers auditable.
+
+Do **not** make the bucket public-read.
+
+## 5. Exit codes & alerting
 
 - Exit **0** — at least one source succeeded (a partial run is still useful).
 - Exit **1** — every source failed, or a fatal error (bad config, etc.).

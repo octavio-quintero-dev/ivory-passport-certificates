@@ -4,9 +4,8 @@
 // stable content fingerprint, so re-runs are idempotent: an unchanged cert maps
 // to the same key and is skipped.
 
-import { createHash } from "node:crypto";
 import { HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { certCountry, toPem } from "./parse.js";
+import { certCountry, fingerprint, toPem } from "./parse.js";
 
 /** Minimal surface of S3Client we use — lets tests inject a fake. */
 export interface S3Like {
@@ -21,8 +20,7 @@ export interface UploadResult {
 /** Object key for a certificate: <prefix>/<country>/<sha256>.pem */
 export function certKey(der: ArrayBuffer, prefix: string): string {
   const country = (certCountry(der) ?? "unknown").toLowerCase();
-  const fingerprint = createHash("sha256").update(Buffer.from(der)).digest("hex");
-  return `${prefix}/${country}/${fingerprint}.pem`;
+  return `${prefix}/${country}/${fingerprint(der)}.pem`;
 }
 
 /** Upload certs, skipping any already present in the bucket. */

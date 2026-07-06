@@ -72,6 +72,17 @@ TypeScript batch worker: download public Master Lists → extract CSCA certifica
 
 ---
 
+## Phase 6 — Manifest (consumable by the passport-validation API)
+
+- [x] `manifest.ts` — build `csca/manifest.json`: every cert grouped by country
+      with `{ key, fingerprint, country, subject, issuer, notBefore, notAfter }`.
+- [x] Wire into `main.ts` — aggregate certs across sources, upload the index each run.
+- [x] `certInfo`/`fingerprint` in `parse.ts` (single-parse metadata extraction).
+- [x] `manifest.test.ts` — structure + upload (14 tests total).
+- [x] Verified against real BSI data: 588 certs / 112 countries; DE 9, US 8, CN 25.
+- [x] **Private-read** access model documented (README + DEPLOY): worker writes,
+      consumer reads with a separate read-only key; bucket not public.
+
 ## Decisions made
 
 - **Language:** TypeScript (matches ivory stack)
