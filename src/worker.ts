@@ -29,27 +29,29 @@ export async function runSources(
   opts: { maxRetries?: number } = {},
 ): Promise<SourceResult[]> {
   const results: SourceResult[] = [];
+  // Keep the rich Source objects in a closure Map, keyed by the string uniqueKey.
+  // Do NOT pass them through Crawlee's userData — it JSON-serializes the request,
+  // which silently destroys non-JSON fields like a RegExp linkPattern.
+  const byKey = new Map(sources.map((s) => [s.name, s]));
 
   const crawler = new BasicCrawler(
     {
       maxRequestRetries: opts.maxRetries ?? 3,
       async requestHandler({ request }) {
-        const source = request.userData as unknown as Source;
+        const source = byKey.get(request.uniqueKey);
+        if (!source) throw new Error(`Unknown source: ${request.uniqueKey}`);
         const stats = await process(source);
         results.push({ name: source.name, ok: true, ...stats });
       },
       failedRequestHandler({ request }, error) {
-        const source = request.userData as unknown as Source;
-        results.push({ name: source.name, ok: false, error: error.message });
+        results.push({ name: request.uniqueKey, ok: false, error: error.message });
       },
     },
     // In-memory storage: no ./storage artifacts, clean state every run.
     new Configuration({ persistStorage: false }),
   );
 
-  await crawler.addRequests(
-    sources.map((s) => ({ url: s.url, uniqueKey: s.name, userData: s as unknown as Record<string, unknown> })),
-  );
+  await crawler.addRequests(sources.map((s) => ({ url: s.url, uniqueKey: s.name })));
   await crawler.run();
 
   return results;
