@@ -6,9 +6,10 @@
 // (2) walk the SET OF Certificate inside it. Both use asn1js/pkijs — no openssl
 // dependency at runtime.
 
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import * as asn1js from "asn1js";
-import { Certificate, ContentInfo, SignedData } from "pkijs";
+import { Certificate, ContentInfo, type RelativeDistinguishedNames, SignedData } from "pkijs";
 
 // asn1js caps nodes at 10k by default (anti-DoS). A real Master List holds
 // hundreds of certs and blows past it, so we raise the ceiling for our own
@@ -64,9 +65,52 @@ export function toPem(der: ArrayBuffer): string {
 /** Issuing country of a certificate (subject C=), or undefined if absent. */
 export function certCountry(der: ArrayBuffer): string | undefined {
   const cert = new Certificate({ schema: fromBER(der).result });
+  return subjectCountry(cert);
+}
+
+/** SHA-256 fingerprint of a certificate's DER, as lowercase hex. */
+export function fingerprint(der: ArrayBuffer): string {
+  return createHash("sha256").update(Buffer.from(der)).digest("hex");
+}
+
+export interface CertInfo {
+  country?: string;
+  subject: string;
+  issuer: string;
+  notBefore: string; // ISO 8601
+  notAfter: string; // ISO 8601
+}
+
+/** Human-readable metadata for a certificate — parsed once. */
+export function certInfo(der: ArrayBuffer): CertInfo {
+  const cert = new Certificate({ schema: fromBER(der).result });
+  return {
+    country: subjectCountry(cert),
+    subject: formatName(cert.subject),
+    issuer: formatName(cert.issuer),
+    notBefore: cert.notBefore.value.toISOString(),
+    notAfter: cert.notAfter.value.toISOString(),
+  };
+}
+
+const RDN_NAMES: Record<string, string> = {
+  "2.5.4.3": "CN",
+  "2.5.4.10": "O",
+  "2.5.4.11": "OU",
+  "2.5.4.6": "C",
+  "2.5.4.5": "serialNumber",
+};
+
+function subjectCountry(cert: Certificate): string | undefined {
   const c = cert.subject.typesAndValues.find((tv) => tv.type === "2.5.4.6"); // id-at-countryName
   // Some issuers encode the code lowercase; normalize to canonical ISO uppercase.
   return (c?.value.valueBlock.value as string | undefined)?.toUpperCase();
+}
+
+function formatName(name: RelativeDistinguishedNames): string {
+  return name.typesAndValues
+    .map((tv) => `${RDN_NAMES[tv.type] ?? tv.type}=${tv.value.valueBlock.value as string}`)
+    .join(",");
 }
 
 /** Concatenate the bytes of a (possibly constructed) OCTET STRING. */
